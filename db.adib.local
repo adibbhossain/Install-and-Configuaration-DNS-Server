@@ -1,0 +1,18 @@
+;
+; BIND data file for local loopback interface
+;
+$TTL	604800
+@	IN	SOA	ns1.adib.local. root.adib.local. (
+			      2		; Serial
+			 604800		; Refresh
+			  86400		; Retry
+			2419200		; Expire
+			 604800 )	; Negative Cache TTL
+;
+@	IN	NS	ns1.adib.local.
+ns1	IN	A	10.248.129.72
+www	IN	A	10.248.129.72
+ftp	IN	A	10.248.129.72
+@	IN	MX	10	mail
+mail 	IN	A	10.248.129.72
+@	IN	AAAA	::1
