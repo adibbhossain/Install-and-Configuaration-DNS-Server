@@ -1,7 +1,5 @@
 # Install-and-Configuaration-DNS-Server
-collection of necessary files to Install and Confuguration a DNS Server in Ubuntu
-
-# DNS Server Setup using BIND
+This repository contains all necessary files and configurations to **install and configure a DNS Server** on Ubuntu using **BIND9**.
 
 ## Project Description
 This project sets up a **DNS (Domain Name System) server** on Linux using **BIND** to handle domain name resolution for a network. It includes:
@@ -13,51 +11,52 @@ This project sets up a **DNS (Domain Name System) server** on Linux using **BIND
 - Basic understanding of networking and DNS concepts.
 - **BIND9** installed on your system.
 
-## Installation
+## Installation and Configuration Steps
 
-### 1. Install BIND9
+### 1. Install `BIND9`
 ```bash
 sudo apt update
 sudo apt install bind9
 ```
-### 2. Add another record for the IP
+### 2. Configure the `/etc/hosts` file
+Edit the `/etc/hosts` file to add the device IP address that will serve as the DNS Server.
 ```bash
 sudo vim /etc/hosts/
 ```
-After accessing the vim editor, will edit the second IP adress and add our device IP which will be the address of our DNS Server:
+Example configuration (replace `adib-Latitude-7480` with your hostname and `10.248.129.72` with your IP):
 ```bash
-127.0.0.1 localhost # will remain same it is
-127.0.1.1 adib-Latitude-7480.adib.local adib-Latitude-7480 # here i am using my hostname, you must be use yours
-10.248.129.72 adib-Latitude-7480.adib.local adib-Latitude-7480 # here i am using my hostname, you must be use yours
+127.0.0.1 localhost
+127.0.1.1 adib-Latitude-7480.adib.local adib-Latitude-7480 
+10.248.129.72 adib-Latitude-7480.adib.local adib-Latitude-7480
 ```
-### 3. Configure *named.conf.options* file
-To preserve the original file, we will duplicate the original file and the new name will be *named.conf.options.orig*
+### 3. Configure `named.conf.options` file
+Before modifying, create a backup:
 ```bash
-sudo cp named.conf.options named.conf.options.orig
+sudo cp /etc/bind/named.conf.options /etc/bind/named.conf.options.orig
 ```
-Then open vim editor to configure the *named.conf.options* file
+Now, open the file:
 ```bash
-sudo vim named.conf.options
+sudo vim /etc/bind/named.conf.options
 ```
-Add these few lines of code inside the curly braces and save
+Add the following inside the `{}` block:
 ```bash
 recursion yes;
 listen-on {10.248.129.72;};
 allow-transfer {none;};
 forwarders {
-  10.248.129.72; # use your device IP which will be the address of your DNS Server
+  10.248.129.72; # # Use your DNS Server's IP
 };
 ```
-### 4. Configure *named.conf.local* file to create *forward lookup zone* and *reverse lookup zone* 
-To preserve the original file, we will duplicate the original file and the new name will be *named.conf.local.orig*
+### 4. Configure `named.conf.local`
+Backup the file:
 ```bash
-sudo cp named.conf.local named.conf.local.orig
+sudo cp /etc/bind/named.conf.local /etc/bind/named.conf.local.orig
 ```
-Then open editor to configure the *named.conf.local* file
+Edit the file:
 ```bash
-sudo gedit named.conf.options
+sudo gedit /etc/bind/named.conf.local
 ```
-Add these few lines of code
+Add these entries for **forward and reverse lookup zones:**
 ```bash
 // forward lookup zone
 zone "adib.local" IN {
@@ -70,36 +69,97 @@ zone "129.248.10.in-addr.arpa" IN {
 	file "/etc/bind/db.129.248.10";
 };
 ```
-### 5. Create zone files
-We will create *forward lookup zone* file. First, we will duplicate *db.local* file and the duplicate files names will be *db.adib.local*
+### 5. Create the *Forward Lookup Zone* File
+Duplicate the sample `db.local` file:
 ```bash
-sudo cp db.local db.adib.local
+sudo cp /etc/bind/db.local /etc/bind/db.adib.local
 ```
-Then open editor to configure the *db.adib.local* file
+Edit the file:
 ```bash
-sudo gedit db.adib.local
+sudo gedit /etc/dind/db.adib.local
 ```
-Add these few lines of code
+Modify the file to match your domain settings:
 ```bash
-// forward lookup zone
-zone "adib.local" IN {
-	type master;
-	file "/etc/bind/db.adib.local";
-};
-// reverse lookup zone
-zone "129.248.10.in-addr.arpa" IN {
-	type master;
-	file "/etc/bind/db.129.248.10";
-};
+$TTL 86400
+@   IN  SOA  ns1.adib.local. root.adib.local. (
+        2024031501 ; Serial
+        3600       ; Refresh
+        1800       ; Retry
+        604800     ; Expire
+        86400 )    ; Minimum TTL
+;
+@   IN  NS  ns1.adib.local.
+ns1 IN  A   10.248.129.72
+www IN  A   10.248.129.72
+ftp IN  A   10.248.129.72
+@   IN  MX  10 mail
+mail IN  A   10.248.129.72
+@   IN  AAAA ::1
+```
+### 6. Create the *Reverse Lookup Zone* File
+Duplicate the sample `db.127` file:
+```bash
+sudo cp /etc/bind/db.127 /etc/bind/db.129.248.10
+```
+Edit the file:
+```bash
+sudo gedit /etc/bind/db.129.248.10
+```
+Modify the file:
+```bash
+$TTL 86400
+@   IN  SOA  ns1.adib.local. root.adib.local. (
+        2024031501 ; Serial
+        3600       ; Refresh
+        1800       ; Retry
+        604800     ; Expire
+        86400 )    ; Minimum TTL
+;
+@   IN  NS  ns1.adib.local.
+72  IN  PTR ns1.adib.local.
+72  IN  PTR www.adib.local.
+72  IN  PTR ftp.adib.local.
+72  IN  PTR mail.adib.local.
+```
+### 7. Restart and Check BIND Service
+```bash
+sudo service bind9 restart
+sudo service bind9 status
+```
+### 9. Update the `resolv.conf` File
+To ensure our system uses the new DNS server, we must update the `resolv.conf` file.
+First, remove the existing `resolv.conf`:
+```bash
+sudo rm /etc/resolv.conf
+sudo ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
+```
+Then, create a symbolic link to keep it dynamic:
+```bash
+sudo ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
+```
+Now, edit the file:
+```bash
+sudo gedit /etc/resolv.conf
+```
+Update it with your new DNS Server IP:
+```bash
+nameserver 10.248.129.72
+search localdomain
 ```
 
+### 10. Test the DNS Server
+Using `nslookup`
+```bash
+nslookup www.adib.local
+```
+Expected Output:
+```bash
+Server:		10.248.129.72 
+Address:	10.248.129.72#53
 
-
-
-
-
-
-
+Name:	www.adib.local # My DNS server name
+Address: 10.248.129.72 # My DNS server IP address
+```
 
 
 
