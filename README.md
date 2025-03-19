@@ -126,7 +126,7 @@ $TTL 86400
 sudo service bind9 restart
 sudo service bind9 status
 ```
-### 9. Update the `resolv.conf` File
+### 8. Update the `resolv.conf` File
 To ensure our system uses the new DNS server, we must update the `resolv.conf` file.
 First, remove the existing `resolv.conf`:
 ```bash
@@ -147,7 +147,7 @@ nameserver 10.248.129.72
 search localdomain
 ```
 
-### 10. Test the DNS Server
+### 9. Test the DNS Server
 
 In the repository, you can find a `test.sh` file. Run the file to test all zones files and the DNS server working perfectly:
 ```bash
