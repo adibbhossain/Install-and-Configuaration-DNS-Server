@@ -44,7 +44,7 @@ recursion yes;
 listen-on {10.248.129.72;};
 allow-transfer {none;};
 forwarders {
-  10.248.129.72; # # Use your DNS Server's IP
+  10.248.129.72; # Use your DNS Server's IP
 };
 ```
 ### 4. Configure `named.conf.local`
@@ -148,17 +148,10 @@ search localdomain
 ```
 
 ### 10. Test the DNS Server
-Using `nslookup`
-```bash
-nslookup www.adib.local
-```
-Expected Output:
-```bash
-Server:		10.248.129.72 
-Address:	10.248.129.72#53
 
-Name:	www.adib.local # My DNS server name
-Address: 10.248.129.72 # My DNS server IP address
+In the repository, you can find a `test.sh` file. Run the file to test all zones files and the DNS server working perfectly:
+```bash
+./test.sh
 ```
 
 
